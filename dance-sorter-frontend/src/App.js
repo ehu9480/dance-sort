@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import GoogleLogin from 'react-google-login';
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 import DancePreference from './DancePreference';
 
@@ -135,89 +135,95 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <h1>Dance Sorter App</h1>
-      {!token ? (
-        <GoogleLogin
-          clientId={CLIENT_ID}
-          buttonText="Login with Google"
-          scope={SCOPES}
-          onSuccess={responseGoogle}
-          onFailure={responseGoogle}
-          cookiePolicy={'single_host_origin'}
-        />
-      ) : (
-        <div>
-          {!spreadsheetId ? (
-            <button onClick={handleSheetSelection}>Select Google Sheet</button>
-          ) : (
-            <div>
-              <p>Selected Spreadsheet ID: {spreadsheetId}</p>
-              <label>
-                Select Sheet:
-                <select value={sheetName} onChange={(e) => setSheetName(e.target.value)}>
-                  <option value="">Select a sheet</option>
-                  {sheets.map((name, index) => (
-                    <option key={index} value={name}>{name}</option>
+    <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
+      <div className="App">
+        <h1>Dance Sorter App</h1>
+        {!token ? (
+          <GoogleLogin
+            clientId={CLIENT_ID}
+            buttonText="Login with Google"
+            scope={SCOPES}
+            onSuccess={(credentialResponse) => {
+              setToken(credentialResponse.credential);
+            }}
+            onError={() => {
+              console.log('Login Failed');
+            }}
+            cookiePolicy={'single_host_origin'}
+          />
+        ) : (
+          <div>
+            {!spreadsheetId ? (
+              <button onClick={handleSheetSelection}>Select Google Sheet</button>
+            ) : (
+              <div>
+                <p>Selected Spreadsheet ID: {spreadsheetId}</p>
+                <label>
+                  Select Sheet:
+                  <select value={sheetName} onChange={(e) => setSheetName(e.target.value)}>
+                    <option value="">Select a sheet</option>
+                    {sheets.map((name, index) => (
+                      <option key={index} value={name}>{name}</option>
+                    ))}
+                  </select>
+                </label>
+                {sheetName && (
+                  <div>
+                    <label>
+                      Start Dance (optional):
+                      <input type="text" value={startDance} onChange={(e) => setStartDance(e.target.value)} />
+                    </label>
+                    <br />
+                    <label>
+                      End Dance (optional):
+                      <input type="text" value={endDance} onChange={(e) => setEndDance(e.target.value)} />
+                    </label>
+                    <br />
+                    <button onClick={processSheet} disabled={isProcessing}>
+                      {isProcessing ? 'Processing...' : 'Generate Schedules'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+        {dances.length > 0 && (
+          <div>
+            <h2>Arrange Dances</h2>
+            <DancePreference dances={dances} setPreferences={setPreferences} />
+            <button onClick={submitPreferences} disabled={isProcessing}>
+              {isProcessing ? 'Processing...' : 'Generate Schedules'}
+            </button>
+          </div>
+        )}
+        {results.length > 0 && (
+          <div>
+            <h2>Results</h2>
+            {results.map((result, index) => (
+              <div key={index}>
+                <h3>Schedule {index + 1} (Total Collisions: {result.cost})</h3>
+                <ol>
+                  {result.schedule.map((dance, idx) => (
+                    <li key={idx}>{dance}</li>
                   ))}
-                </select>
-              </label>
-              {sheetName && (
-                <div>
-                  <label>
-                    Start Dance (optional):
-                    <input type="text" value={startDance} onChange={(e) => setStartDance(e.target.value)} />
-                  </label>
-                  <br />
-                  <label>
-                    End Dance (optional):
-                    <input type="text" value={endDance} onChange={(e) => setEndDance(e.target.value)} />
-                  </label>
-                  <br />
-                  <button onClick={processSheet} disabled={isProcessing}>
-                    {isProcessing ? 'Processing...' : 'Generate Schedules'}
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-      {dances.length > 0 && (
-        <div>
-          <h2>Arrange Dances</h2>
-          <DancePreference dances={dances} setPreferences={setPreferences} />
-          <button onClick={submitPreferences} disabled={isProcessing}>
-            {isProcessing ? 'Processing...' : 'Generate Schedules'}
-          </button>
-        </div>
-      )}
-      {results.length > 0 && (
-        <div>
-          <h2>Results</h2>
-          {results.map((result, index) => (
-            <div key={index}>
-              <h3>Schedule {index + 1} (Total Collisions: {result.cost})</h3>
-              <ol>
-                {result.schedule.map((dance, idx) => (
-                  <li key={idx}>{dance}</li>
-                ))}
-              </ol>
-              {result.collisions.length > 0 && (
-                <div>
-                  <h4>Collisions Detected:</h4>
-                  {result.collisions.map((collision, idx) => (
-                    <p key={idx}>
-                      Dancer '{collision.member}' between '{collision.previous_dance}' and '{collision.current_dance}'
-                    </p>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+                </ol>
+                {result.collisions.length > 0 && (
+                  <div>
+                    <h4>Collisions Detected:</h4>
+                    {result.collisions.map((collision, idx) => (
+                      <p key={idx}>
+                        Dancer '{collision.member}' between '{collision.previous_dance}' and '{collision.current_dance}'
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </GoogleOAuthProvider>
   );
 }
 
