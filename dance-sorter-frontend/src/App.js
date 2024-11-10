@@ -59,6 +59,7 @@ function App() {
       .addView(view)
       .setOAuthToken(token)
       .setDeveloperKey(API_KEY)
+      .setRelayUrl(window.location.host)
       .setCallback(pickerCallback)
       .build();
     picker.setVisible(true);
