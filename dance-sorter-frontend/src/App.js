@@ -48,10 +48,21 @@ function App() {
   };
 
   const handleSheetSelection = () => {
-    window.gapi.load('picker', { 'callback': createPicker });
+    window.gapi.load('client:auth2', () => {
+      window.gapi.client.init({
+        apiKey: API_KEY,
+        clientId: CLIENT_ID,
+        scope: SCOPES,
+      }).then(() => createPicker());
+    });
   };
 
   const createPicker = () => {
+    if (!token) {
+      console.error("OAuth token is missing or invalid.");
+      return;
+    }
+
     const view = new window.google.picker.DocsView(window.google.picker.ViewId.SPREADSHEETS)
       .setMimeTypes('application/vnd.google-apps.spreadsheet');
 
@@ -59,7 +70,6 @@ function App() {
       .addView(view)
       .setOAuthToken(token)
       .setDeveloperKey(API_KEY)
-      .setRelayUrl(window.location.host)
       .setCallback(pickerCallback)
       .build();
     picker.setVisible(true);
