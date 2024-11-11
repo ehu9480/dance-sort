@@ -23,10 +23,25 @@ function App() {
 
   // Load Google API client
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://apis.google.com/js/api.js';
-    script.onload = () => window.gapi.load('client', () => console.log("gapi client loaded for Picker"));
-    document.body.appendChild(script);
+    const loadGapiAndPicker = () => {
+      // Load gapi for Sheets API
+      const gapiScript = document.createElement('script');
+      gapiScript.src = 'https://apis.google.com/js/api.js';
+      gapiScript.onload = () => window.gapi.load('client', () => console.log("gapi client loaded for Sheets API"));
+      document.body.appendChild(gapiScript);
+
+      // Load Google Picker API
+      const pickerScript = document.createElement('script');
+      pickerScript.src = 'https://apis.google.com/js/api.js?onload=onPickerLoad';
+      pickerScript.async = true;
+      document.body.appendChild(pickerScript);
+    };
+
+    window.onPickerLoad = () => {
+      console.log("Google Picker API loaded");
+    };
+
+    loadGapiAndPicker();
   }, []);
 
   const handleLoginSuccess = (credentialResponse) => {
@@ -38,7 +53,11 @@ function App() {
       console.error("OAuth token is missing or invalid.");
       return;
     }
-    createPicker();
+    if (window.google && window.google.picker) {
+      createPicker();
+    } else {
+      console.error("Google Picker API is not yet loaded.");
+    }
   };
 
   const createPicker = () => {
