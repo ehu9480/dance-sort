@@ -146,21 +146,18 @@ function App() {
   };
 
   return (
-    <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
+    <GoogleOAuthProvider clientId={CLIENT_ID}>
       <div className="App">
         <h1>Dance Sorter App</h1>
-        {!token ? (
+        {!user ? (
           <GoogleLogin
-            clientId={CLIENT_ID}
-            buttonText="Login with Google"
-            scope={SCOPES}
             onSuccess={(credentialResponse) => {
-              setToken(credentialResponse.credential);
+              console.log("Credential Response", credentialResponse);
+              setUser(credentialResponse);
             }}
             onError={() => {
-              console.log('Login Failed');
+              console.log("Login Failed");
             }}
-            cookiePolicy={'single_host_origin'}
           />
         ) : (
           <div>
