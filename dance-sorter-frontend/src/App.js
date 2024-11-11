@@ -25,52 +25,30 @@ function App() {
   useEffect(() => {
     const script = document.createElement('script');
     script.src = 'https://apis.google.com/js/api.js';
-    script.onload = () => {
-      window.gapi.load('client', initClient);
-    };
+    script.onload = () => window.gapi.load('client', () => console.log("gapi client loaded for Picker"));
     document.body.appendChild(script);
   }, []);
 
-  const initClient = () => {
-    window.gapi.client.init({
-      apiKey: API_KEY,
-      clientId: CLIENT_ID,
-      scope: SCOPES,
-      discoveryDocs: DISCOVERY_DOCS,
-    });
-  };
-
-  const responseGoogle = (response) => {
-    if (response.accessToken) {
-      setToken(response.accessToken);
-    } else {
-      console.error('Google login failed', response);
-    }
+  const handleLoginSuccess = (credentialResponse) => {
+    setToken(credentialResponse.credential);
   };
 
   const handleSheetSelection = () => {
-    window.gapi.load('client:auth2', () => {
-      window.gapi.client.init({
-        apiKey: API_KEY,
-        clientId: CLIENT_ID,
-        scope: SCOPES,
-      }).then(() => createPicker());
-    });
-  };
-
-  const createPicker = () => {
     if (!token) {
       console.error("OAuth token is missing or invalid.");
       return;
     }
+    createPicker();
+  };
 
+  const createPicker = () => {
     const view = new window.google.picker.DocsView(window.google.picker.ViewId.SPREADSHEETS)
       .setMimeTypes('application/vnd.google-apps.spreadsheet');
 
     const picker = new window.google.picker.PickerBuilder()
       .addView(view)
       .setOAuthToken(token)
-      .setDeveloperKey(API_KEY)
+      .setDeveloperKey(process.env.REACT_APP_GOOGLE_API_KEY)
       .setCallback(pickerCallback)
       .build();
     picker.setVisible(true);
@@ -86,13 +64,11 @@ function App() {
 
   const loadSheetNames = async (id) => {
     try {
-      const response = await window.gapi.client.sheets.spreadsheets.get({
-        spreadsheetId: id,
-      });
+      const response = await window.gapi.client.sheets.spreadsheets.get({ spreadsheetId: id });
       const sheetTitles = response.result.sheets.map(sheet => sheet.properties.title);
       setSheets(sheetTitles);
     } catch (error) {
-      console.error('Error loading sheet names', error);
+      console.error("Error loading sheet names:", error);
     }
   };
 
@@ -150,16 +126,8 @@ function App() {
     <GoogleOAuthProvider clientId={CLIENT_ID}>
       <div className="App">
         <h1>Dance Sorter App</h1>
-        {!user ? (
-          <GoogleLogin
-            onSuccess={(credentialResponse) => {
-              console.log("Credential Response", credentialResponse);
-              setUser(credentialResponse);
-            }}
-            onError={() => {
-              console.log("Login Failed");
-            }}
-          />
+        {!token ? (
+          <GoogleLogin onSuccess={handleLoginSuccess} onError={() => console.log("Login Failed")} />
         ) : (
           <div>
             {!spreadsheetId ? (
