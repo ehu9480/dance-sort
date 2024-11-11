@@ -4,7 +4,6 @@ import axios from 'axios';
 import DancePreference from './DancePreference';
 
 function App() {
-  const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [spreadsheetId, setSpreadsheetId] = useState(null);
   const [sheetName, setSheetName] = useState(null);
@@ -23,25 +22,17 @@ function App() {
 
   // Load Google API client
   useEffect(() => {
-    const loadGapiAndPicker = () => {
-      // Load gapi for Sheets API
-      const gapiScript = document.createElement('script');
-      gapiScript.src = 'https://apis.google.com/js/api.js';
-      gapiScript.onload = () => window.gapi.load('client', () => console.log("gapi client loaded for Sheets API"));
-      document.body.appendChild(gapiScript);
-
-      // Load Google Picker API
-      const pickerScript = document.createElement('script');
-      pickerScript.src = 'https://apis.google.com/js/api.js?onload=onPickerLoad';
-      pickerScript.async = true;
-      document.body.appendChild(pickerScript);
-    };
-
-    window.onPickerLoad = () => {
-      console.log("Google Picker API loaded");
-    };
-
-    loadGapiAndPicker();
+    // Load gapi for Sheets API
+    const gapiScript = document.createElement('script');
+    gapiScript.src = 'https://apis.google.com/js/api.js';
+    gapiScript.onload = () => window.gapi.load('client', () => console.log("gapi client loaded for Sheets API"));
+    document.body.appendChild(gapiScript);
+  
+    // Load Google Picker API
+    const pickerScript = document.createElement('script');
+    pickerScript.src = 'https://apis.google.com/js/picker.js'; // Load the Google Picker specifically
+    pickerScript.onload = () => setPickerLoaded(true);  // Set pickerLoaded to true once picker.js is loaded
+    document.body.appendChild(pickerScript);
   }, []);
 
   const handleLoginSuccess = (credentialResponse) => {
