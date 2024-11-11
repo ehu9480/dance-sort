@@ -4,6 +4,7 @@ import axios from 'axios';
 import DancePreference from './DancePreference';
 
 function App() {
+  const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [spreadsheetId, setSpreadsheetId] = useState(null);
   const [sheetName, setSheetName] = useState(null);
