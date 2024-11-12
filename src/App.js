@@ -152,7 +152,7 @@ function App() {
   const submitPreferences = async () => {
     setIsProcessing(true);
     try {
-      const response = await axios.post('https://YOUR_CLOUD_FUNCTION_URL', {
+      const response = await axios.post('https://us-central1-dancesorterbackend.cloudfunctions.net/process_request', {
         token: token,
         spreadsheetId: spreadsheetId,
         sheetName: sheetName,
