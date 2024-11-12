@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google';
+import { useGoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 import DancePreference from './DancePreference';
+import { AppBar, Toolbar, Typography, Button, Container, Card, CardContent, CircularProgress, Grid } from '@mui/material';
 
 function App() {
+  const [user, setUser] = useState(null);
+  const [spreadsheetName, setSpreadsheetName] = useState(null);
   const [token, setToken] = useState(null);
   const [spreadsheetId, setSpreadsheetId] = useState(null);
   const [sheetName, setSheetName] = useState(null);
   const [sheets, setSheets] = useState([]);
   const [dances, setDances] = useState([]);
-  const [startDance, setStartDance] = useState('');
-  const [endDance, setEndDance] = useState('');
   const [results, setResults] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [preferences, setPreferences] = useState({});
   const [apisLoaded, setApisLoaded] = useState(false);
 
   const CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
@@ -22,6 +22,15 @@ function App() {
 
   // Load Google API client and Picker API
   useEffect(() => {
+    const savedToken = localStorage.getItem('token');
+    const savedUser = JSON.parse(localStorage.getItem('user'));
+    const savedSpreadsheetId = localStorage.getItem('spreadsheetId');
+    const savedSpreadsheetName = localStorage.getItem('spreadsheetName');
+  
+    if (savedUser) {
+      setUser(savedUser);
+    }
+  
     const loadApis = () => {
       const script1 = document.createElement('script');
       script1.src = 'https://apis.google.com/js/api.js';
@@ -30,11 +39,24 @@ function App() {
           console.log('GAPI client loaded for API');
           await window.gapi.client.load('drive', 'v3');
           await window.gapi.client.load('sheets', 'v4');
+  
+          // Now that gapi client is loaded, set token if we have it
+          if (savedToken) {
+            setToken(savedToken);
+            window.gapi.client.setToken({ access_token: savedToken });
+          }
+  
+          if (savedSpreadsheetId && savedSpreadsheetName) {
+            setSpreadsheetId(savedSpreadsheetId);
+            setSpreadsheetName(savedSpreadsheetName);
+            loadSheetNames(savedSpreadsheetId);
+          }
+  
           checkIfApisLoaded();
         });
       };
       document.body.appendChild(script1);
-
+  
       const script2 = document.createElement('script');
       script2.src = 'https://apis.google.com/js/picker.js';
       script2.onload = () => {
@@ -43,13 +65,13 @@ function App() {
       };
       document.body.appendChild(script2);
     };
-
+  
     const checkIfApisLoaded = () => {
       if (window.gapi && window.google && window.google.picker) {
         setApisLoaded(true);
       }
     };
-
+  
     loadApis();
   }, []);
 
@@ -57,12 +79,34 @@ function App() {
     onSuccess: async (tokenResponse) => {
       console.log(tokenResponse);
       setToken(tokenResponse.access_token);
-      // Set the access token for gapi client
+      localStorage.setItem('token', tokenResponse.access_token);
       window.gapi.client.setToken({ access_token: tokenResponse.access_token });
+  
+      // Fetch user info
+      try {
+        const userInfoResponse = await axios.get('https://www.googleapis.com/oauth2/v1/userinfo?alt=json', {
+          headers: {
+            Authorization: `Bearer ${tokenResponse.access_token}`,
+          },
+        });
+        console.log('User Info:', userInfoResponse.data);
+        setUser(userInfoResponse.data);
+        localStorage.setItem('user', JSON.stringify(userInfoResponse.data));
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+      }
     },
     scope: SCOPES,
     flow: 'implicit',
   });
+
+  const logout = () => {
+    setToken(null);
+    setUser(null);
+    setSpreadsheetId(null);
+    setSpreadsheetName(null);
+    localStorage.clear();
+  };
 
   const handleSheetSelection = () => {
     if (!apisLoaded) {
@@ -101,6 +145,8 @@ function App() {
     if (data.action === window.google.picker.Action.PICKED) {
       const doc = data.docs[0];
       setSpreadsheetId(doc.id);
+      setSpreadsheetName(doc.name); // Save the name
+      localStorage.setItem('spreadsheetName', doc.name); // Save to localStorage
       loadSheetNames(doc.id);
     }
   };
@@ -125,139 +171,179 @@ function App() {
   const processSheet = async () => {
     setIsProcessing(true);
     try {
-      const response = await axios.post('https://us-central1-dancesorterbackend.cloudfunctions.net/process_request', {
-        token: token,
+      // Fetch the sheet data using Google Sheets API
+      const response = await window.gapi.client.sheets.spreadsheets.values.get({
         spreadsheetId: spreadsheetId,
-        sheetName: sheetName,
-        startDance: startDance || null,
-        endDance: endDance || null,
-        // Add any additional parameters if needed
+        range: `${sheetName}`,
       });
-      setResults(response.data.results);
-      const response2 = await window.gapi.client.sheets.spreadsheets.values.get({
-        spreadsheetId: spreadsheetId,
-        range: `${sheetName}`, // Adjust the range to match your sheet
-      });
-      const rows = response2.result.values;
-      // Assuming the first row contains headers 'Dance' and 'Members'
-      const danceIndex = rows[0].indexOf('Dance');
-      const danceData = rows.slice(1).map((row) => row[danceIndex]);
-      loadDances(danceData);
+      const rows = response.result.values;
+  
+      if (rows && rows.length > 0) {
+        // Assuming the first row contains headers 'Dance' and 'Members'
+        const headerRow = rows[0];
+        const danceIndex = headerRow.indexOf('Dance');
+        if (danceIndex === -1) {
+          console.error("Couldn't find 'Dance' column in the sheet.");
+        } else {
+          const danceData = rows.slice(1).map((row) => row[danceIndex]);
+          loadDances(danceData.filter((dance) => dance)); // Filter out empty values
+        }
+      } else {
+        console.error('No data found in the sheet.');
+      }
     } catch (error) {
       console.error('Error processing sheet', error);
     }
     setIsProcessing(false);
   };
+  
+
+  const [preferences, setPreferences] = useState({
+    fixedPositions: [],
+    Start: [],
+    Middle: [],
+    End: [],
+  });
 
   const submitPreferences = async () => {
     setIsProcessing(true);
     try {
-      const response = await axios.post('https://us-central1-dancesorterbackend.cloudfunctions.net/process_request', {
-        token: token,
-        spreadsheetId: spreadsheetId,
-        sheetName: sheetName,
-        startDance: startDance || null,
-        endDance: endDance || null,
-        preferences: preferences,
-      });
+      const response = await axios.post(
+        'https://us-central1-dancesorterbackend.cloudfunctions.net/process_request',
+        {
+          token: token,
+          spreadsheetId: spreadsheetId,
+          sheetName: sheetName,
+          preferences: preferences,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
       setResults(response.data.results);
     } catch (error) {
       console.error('Error processing preferences', error);
     }
     setIsProcessing(false);
   };
+  
 
   return (
     <div className="App">
-      <h1>Dance Sorter App</h1>
-      {!token ? (
-        <button onClick={() => login()}>
-          Sign in with Google
-        </button>
-      ) : (
-        <div>
-          {!spreadsheetId ? (
-            <button onClick={handleSheetSelection}>Select Google Sheet</button>
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h6" style={{ flexGrow: 1 }}>
+            Setlist Sorter
+          </Typography>
+          {user ? (
+            <div className="user-info">
+              <Typography variant="body1" style={{ marginRight: '16px' }}>
+                Logged in as: {user.name}
+              </Typography>
+              <Button color="inherit" onClick={logout}>
+                Logout
+              </Button>
+            </div>
           ) : (
-            <div>
-              <p>Selected Spreadsheet ID: {spreadsheetId}</p>
-              <label>
-                Select Sheet:
-                <select value={sheetName} onChange={(e) => setSheetName(e.target.value)}>
-                  <option value="">Select a sheet</option>
-                  {sheets.map((name, index) => (
-                    <option key={index} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {sheetName && (
-                <div>
-                  <label>
-                    Start Dance (optional):
-                    <input
-                      type="text"
-                      value={startDance}
-                      onChange={(e) => setStartDance(e.target.value)}
-                    />
-                  </label>
-                  <br />
-                  <label>
-                    End Dance (optional):
-                    <input
-                      type="text"
-                      value={endDance}
-                      onChange={(e) => setEndDance(e.target.value)}
-                    />
-                  </label>
-                  <br />
-                  <button onClick={processSheet} disabled={isProcessing}>
-                    {isProcessing ? 'Processing...' : 'Generate Schedules'}
-                  </button>
-                </div>
-              )}
-            </div>
+            <Button color="inherit" onClick={() => login()}>
+              Sign in with Google
+            </Button>
           )}
-        </div>
-      )}
-      {dances.length > 0 && (
-        <div>
-          <h2>Arrange Dances</h2>
-          <DancePreference dances={dances} setPreferences={setPreferences} />
-          <button onClick={submitPreferences} disabled={isProcessing}>
-            {isProcessing ? 'Processing...' : 'Generate Schedules'}
-          </button>
-        </div>
-      )}
-      {results.length > 0 && (
-        <div>
-          <h2>Results</h2>
-          {results.map((result, index) => (
-            <div key={index}>
-              <h3>
-                Schedule {index + 1} (Total Collisions: {result.cost})
-              </h3>
-              <ol>
-                {result.schedule.map((dance, idx) => (
-                  <li key={idx}>{dance}</li>
-                ))}
-              </ol>
-              {result.collisions.length > 0 && (
-                <div>
-                  <h4>Collisions Detected:</h4>
-                  {result.collisions.map((collision, idx) => (
-                    <p key={idx}>
-                      Dancer '{collision.member}' between '{collision.previous_dance}' and '
-                      {collision.current_dance}'
-                    </p>
-                  ))}
+        </Toolbar>
+      </AppBar>
+
+      <Container style={{ marginTop: '20px' }}>
+        {token && (
+          <div>
+            {!spreadsheetId ? (
+              <Button variant="contained" color="primary" onClick={handleSheetSelection}>
+                Select Google Sheet
+              </Button>
+            ) : (
+              <div>
+                <Typography variant="h6">Selected Spreadsheet: {spreadsheetName}</Typography>
+                <Button variant="outlined" color="primary" onClick={handleSheetSelection} style={{ marginTop: '10px' }}>
+                  Select a Different Spreadsheet
+                </Button>
+                <div style={{ marginTop: '20px' }}>
+                  <Typography variant="body1">Select Sheet:</Typography>
+                  <select
+                    value={sheetName}
+                    onChange={(e) => setSheetName(e.target.value)}
+                    style={{ padding: '8px', marginTop: '10px' }}
+                  >
+                    <option value="">Select a sheet</option>
+                    {sheets.map((name, index) => (
+                      <option key={index} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                  {sheetName && (
+                    <div style={{ marginTop: '20px' }}>
+                      <Button variant="contained" color="primary" onClick={processSheet} disabled={isProcessing}>
+                        {isProcessing ? <CircularProgress size={24} /> : 'Load Dances'}
+                      </Button>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {dances.length > 0 && (
+          <div style={{ marginTop: '40px' }}>
+            <Typography variant="h5">Arrange Dances</Typography>
+            <DancePreference dances={dances} setPreferences={setPreferences} />
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={submitPreferences}
+              disabled={isProcessing}
+              style={{ marginTop: '20px' }}
+            >
+              {isProcessing ? <CircularProgress size={24} /> : 'Generate Schedules'}
+            </Button>
+          </div>
+        )}
+
+        {results.length > 0 && (
+          <div style={{ marginTop: '40px' }}>
+            <Typography variant="h5">Results</Typography>
+            <Grid container spacing={2} style={{ marginTop: '20px' }}>
+              {results.map((result, index) => (
+                <Grid item xs={12} sm={6} md={4} key={index}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6">
+                        Schedule {index + 1} (Total Collisions: {result.cost})
+                      </Typography>
+                      <ol>
+                        {result.schedule.map((dance, idx) => (
+                          <li key={idx}>{dance}</li>
+                        ))}
+                      </ol>
+                      {result.collisions.length > 0 && (
+                        <div>
+                          <Typography variant="subtitle1">Collisions Detected:</Typography>
+                          {result.collisions.map((collision, idx) => (
+                            <Typography variant="body2" key={idx}>
+                              {collision.member}: '{collision.previous_dance}' and '{collision.current_dance}'
+                            </Typography>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </div>
+        )}
+      </Container>
     </div>
   );
 }

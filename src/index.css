@@ -1,25 +1,123 @@
-/* src/index.css */
+/* App.css */
 
+/* General Styles */
 body {
+  margin: 0;
   font-family: Arial, sans-serif;
-  margin: 20px;
 }
 
 .App {
-  max-width: 800px;
-  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header {
+  background-color: #3f51b5;
+  color: #fff;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header h1 {
+  margin: 0;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.user-info span {
+  margin-right: 10px;
+}
+
+.user-info button {
+  background-color: #fff;
+  color: #3f51b5;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
 }
 
 button {
-  padding: 10px 20px;
-  margin: 10px 0;
+  background-color: #3f51b5;
+  color: #fff;
+  border: none;
+  padding: 10px 15px;
+  cursor: pointer;
+  margin-top: 10px;
 }
 
-input, select {
-  padding: 5px;
-  margin: 5px 0;
+button:disabled {
+  background-color: #9fa8da;
+  cursor: not-allowed;
 }
 
-h1, h2, h3, h4 {
-  color: #333;
+/* Dance Preference Styles */
+.dance-preference-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.dance-section {
+  background-color: #f0f0f0;
+  padding: 8px;
+  width: 200px;
+  min-height: 200px;
+  margin: 0 8px 16px 0;
+}
+
+.dance-section h3 {
+  margin-top: 0;
+}
+
+.dance-item {
+  user-select: none;
+  padding: 8px;
+  margin: 0 0 8px 0;
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+}
+
+/* Results Styles */
+.results-container {
+  margin-top: 20px;
+}
+
+.results-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.result-card {
+  background-color: #fafafa;
+  border: 1px solid #ddd;
+  padding: 15px;
+  flex: 1 1 calc(33% - 40px); /* Adjust the width */
+  box-sizing: border-box;
+}
+
+.result-card h3 {
+  margin-top: 0;
+}
+
+/* Media Queries for Responsiveness */
+@media (max-width: 768px) {
+  .results-grid {
+    flex-direction: column;
+  }
+
+  .result-card {
+    flex: 1 1 100%;
+  }
 }
