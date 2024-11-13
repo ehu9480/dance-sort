@@ -9,7 +9,7 @@ function TypingText() {
         loop={1} // How many times you want to loop through the strings
         cursor
         cursorStyle="_"
-        typeSpeed={70}
+        typeSpeed={40}
       />
     </h1>
   );

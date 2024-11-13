@@ -1,38 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import './DancePreference.css';
 import { motion } from 'framer-motion';
 
-function DancePreference({ dances, setPreferences }) {
+function DancePreference({ dances, localPreferences, setLocalPreferences }) {
   const sections = ['Unassigned', 'Fixed Positions', 'Start', 'Middle', 'End'];
 
   const sectionVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
   };
-
-  // Initialize local preferences
-  const [localPreferences, setLocalPreferences] = useState({
-    Unassigned: dances.map((dance) => ({ name: dance })),
-    'Fixed Positions': [],
-    Start: [],
-    Middle: [],
-    End: [],
-  });
-
-  useEffect(() => {
-    // Update the parent component
-    const updatedPreferences = {
-      fixedPositions: localPreferences['Fixed Positions'].map((item) => ({
-        name: item.name,
-        position: item.position,
-      })),
-      Start: localPreferences.Start.map((item) => item.name),
-      Middle: localPreferences.Middle.map((item) => item.name),
-      End: localPreferences.End.map((item) => item.name),
-    };
-    setPreferences(updatedPreferences);
-  }, [localPreferences, setPreferences]);
 
   const onDragEnd = (result) => {
     const { source, destination } = result;

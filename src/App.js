@@ -151,6 +151,11 @@ function App() {
     setUser(null);
     setSpreadsheetId(null);
     setSpreadsheetName(null);
+    setSheetName(null);
+    setDances([]);
+    setResults([]);
+    setLocalPreferences({});
+    setPreferences({});
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('spreadsheetId');
@@ -165,12 +170,8 @@ function App() {
     // Reset sheet name and dances when selecting a different spreadsheet
     setSheetName(null);
     setDances([]);
-    setPreferences({
-      fixedPositions: [],
-      Start: [],
-      Middle: [],
-      End: [],
-    });
+    setLocalPreferences({});
+    setPreferences({});
     createPicker();
   };
 
@@ -248,12 +249,38 @@ function App() {
     setIsProcessing(false);
   };
 
-  const [preferences, setPreferences] = useState({
-    fixedPositions: [],
-    Start: [],
-    Middle: [],
-    End: [],
-  });
+  // Initialize localPreferences and preferences
+  const [localPreferences, setLocalPreferences] = useState({});
+  const [preferences, setPreferences] = useState({});
+
+  // Initialize localPreferences when dances are loaded
+  useEffect(() => {
+    if (dances.length > 0 && Object.keys(localPreferences).length === 0) {
+      setLocalPreferences({
+        Unassigned: dances.map((dance) => ({ name: dance })),
+        'Fixed Positions': [],
+        Start: [],
+        Middle: [],
+        End: [],
+      });
+    }
+  }, [dances]);
+
+  // Update preferences when localPreferences changes
+  useEffect(() => {
+    if (Object.keys(localPreferences).length > 0) {
+      const updatedPreferences = {
+        fixedPositions: localPreferences['Fixed Positions'].map((item) => ({
+          name: item.name,
+          position: item.position,
+        })),
+        Start: localPreferences.Start.map((item) => item.name),
+        Middle: localPreferences.Middle.map((item) => item.name),
+        End: localPreferences.End.map((item) => item.name),
+      };
+      setPreferences(updatedPreferences);
+    }
+  }, [localPreferences]);
 
   const submitPreferences = async () => {
     setIsProcessing(true);
@@ -264,7 +291,7 @@ function App() {
           token: token,
           spreadsheetId: spreadsheetId,
           sheetName: sheetName,
-          preferences: preferences,
+          preferences: preferences, // Send preferences, not localPreferences
         },
         {
           headers: {
@@ -379,7 +406,7 @@ function App() {
                   </div>
                 </div>
               </motion.div>
-            ) : isProcessing ? (
+            ) : isProcessing && dances.length === 0 ? (
               // Show loading indicator while processing
               <motion.div
                 initial="hidden"
@@ -404,10 +431,14 @@ function App() {
                 transition={{ duration: 0.5 }}
               >
                 <Container className="container">
-                  {dances.length > 0 && (
+                  {dances.length > 0 && Object.keys(localPreferences).length > 0 && (
                     <div style={{ marginTop: '40px' }}>
                       <Typography variant="h5">Arrange Dances</Typography>
-                      <DancePreference dances={dances} setPreferences={setPreferences} />
+                      <DancePreference
+                        dances={dances}
+                        localPreferences={localPreferences}
+                        setLocalPreferences={setLocalPreferences}
+                      />
                       <Button
                         variant="contained"
                         color="primary"
@@ -472,7 +503,7 @@ function App() {
             transition={{ duration: 0.5 }}
             className="login-container"
           >
-            <TypingText/>
+            <TypingText />
             <motion.div
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
