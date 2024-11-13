@@ -472,7 +472,7 @@ function App() {
             transition={{ duration: 0.5 }}
             className="login-container"
           >
-            <TypingText text="Please log in with Google to get started" />
+            <TypingText/>
             <motion.div
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}

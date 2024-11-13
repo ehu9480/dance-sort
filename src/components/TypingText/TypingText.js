@@ -1,18 +1,17 @@
-// TypingText.js
-import React, { useState, useEffect } from 'react';
-import Typical from 'react-typical';
-import './TypingText.css';
+import React from 'react';
+import { Typewriter } from 'react-simple-typewriter';
 
-
-function TypingText({text}) {
+function TypingText() {
   return (
-    <div className="typing-text">
-      <Typical
-        steps={[text, 2000]}
-        loop={1}
-        wrapper="h2"
+    <h1 style={{ fontWeight: 'bold', fontSize: '2em', color: '#ffffff' }}>
+      <Typewriter
+        words={[ "Please log in with Google to get started" ]}
+        loop={1} // How many times you want to loop through the strings
+        cursor
+        cursorStyle="_"
+        typeSpeed={70}
       />
-    </div>
+    </h1>
   );
 }
 
