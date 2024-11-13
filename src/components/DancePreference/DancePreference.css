@@ -1,0 +1,112 @@
+/* DancePreference.css */
+
+/* Container for the sections */
+.sections-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+}
+
+/* Droppable Sections (Fixed Positions, Start, Middle, End) */
+.droppable-section {
+  background-color: rgba(255, 255, 255, 0.05); /* Semi-transparent */
+  padding: 16px;
+  min-height: 150px;
+  flex: 1;
+  max-width: 300px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.droppable-section.dragging-over {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.droppable-section h3 {
+  margin-top: 0;
+  color: #ffffff;
+}
+
+/* Draggable Items */
+.draggable-item {
+  user-select: none;
+  padding: 8px;
+  margin: 8px 0;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.draggable-item.dragging {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Position Select Dropdown */
+.position-select {
+  margin-top: 8px;
+}
+
+.position-select label {
+  color: #ffffff;
+}
+
+.position-select select {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 4px;
+  margin-left: 8px;
+}
+
+/* Unassigned Section */
+.unassigned-section {
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 16px;
+  min-height: 100px;
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  justify-content: center;
+}
+
+.unassigned-section.dragging-over {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.unassigned-section h3 {
+  width: 100%;
+  color: #ffffff;
+  text-align: center;
+}
+
+.unassigned-item {
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  padding: 8px;
+  margin: 4px;
+  cursor: pointer;
+}
+
+.unassigned-item.dragging {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .sections-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .droppable-section {
+    max-width: 90%;
+  }
+}

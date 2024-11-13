@@ -1,38 +1,158 @@
+/* App.css */
+
+/* General App Styles */
 .App {
   text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
+}
+
+/* User Info Styles */
+.user-info {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+}
+
+/* Spreadsheet Info Styles */
+.spreadsheet-info {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+}
+
+/* Button Styles */
+button {
+  color: #1E90FF; /* New accent color */
+  border: 1px solid #1E90FF;
+}
+
+button:hover {
+  background-color: rgba(30, 144, 255, 0.1); /* Lighten on hover */
+}
+
+button:disabled {
+  background-color: rgba(29, 185, 84, 0.5);
+  cursor: not-allowed;
+}
+
+/* Container Styles */
+.select-sheet-container,
+.login-container,
+.container {
+  margin-top: 100px;
+  text-align: center;
+}
+
+/* Dance Preference Styles */
+.dance-preference-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.dance-section {
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 16px;
+  width: 200px;
+  min-height: 200px;
+  margin: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dance-section h3 {
+  margin-top: 0;
+  color: #ffffff;
+}
+
+.dance-item {
+  user-select: none;
+  padding: 8px;
+  margin: 8px 0;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.dance-item:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Results Styles */
+.results-container {
+  margin-top: 20px;
+}
+
+.results-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
 }
 
-.App-link {
-  color: #61dafb;
+.result-card {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 20px;
+  flex: 1 1 calc(33% - 40px);
+  box-sizing: border-box;
+  border-radius: 12px;
+  color: #ffffff;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+.result-card h3 {
+  margin-top: 0;
+}
+
+/* Typography Styles */
+.MuiTypography-root {
+  color: #ffffff;
+}
+/* Dance Sections */
+.droppable-section {
+  background-color: rgba(255, 255, 255, 0.05); /* Semi-transparent */
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin: 16px;
+  flex: 1;
+}
+
+.droppable-section h3 {
+  color: #ffffff;
+}
+
+/* Draggable Items */
+.draggable-item {
+  background-color: rgba(255, 255, 255, 0.1); /* Semi-transparent */
+  color: #ffffff;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+}
+
+.draggable-item:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Result Cards */
+.result-card {
+  background-color: rgba(255, 255, 255, 0.05); /* Semi-transparent */
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: #ffffff;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .results-grid {
+    flex-direction: column;
   }
-  to {
-    transform: rotate(360deg);
+
+  .result-card {
+    flex: 1 1 100%;
   }
 }
