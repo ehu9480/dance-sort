@@ -116,9 +116,20 @@ function App() {
 
   useEffect(() => {
     if (spreadsheetId && sheetName) {
+      // Reset dances, preferences, and results when sheetName changes
+      setDances([]);
+      setLocalPreferences({});
+      setPreferences({});
+      setResults([]);
       processSheet();
     }
   }, [spreadsheetId, sheetName]);
+
+  useEffect(() => {
+    if (spreadsheetId) {
+      loadSheetNames(spreadsheetId);
+    }
+  }, [spreadsheetId]);
 
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -167,11 +178,14 @@ function App() {
       console.error('OAuth token is missing or invalid.');
       return;
     }
-    // Reset sheet name and dances when selecting a different spreadsheet
+    // Reset spreadsheet ID and name when selecting a different spreadsheet
+    setSpreadsheetId(null);
+    setSpreadsheetName(null);
     setSheetName(null);
     setDances([]);
     setLocalPreferences({});
     setPreferences({});
+    setResults([]);
     createPicker();
   };
 
@@ -352,6 +366,38 @@ function App() {
               </div>
             )}
 
+            {/* Sheet Name Selection Dropdown */}
+            {spreadsheetId && sheets.length > 0 && (
+              <div className="select-sheet-container" style={{ marginTop: '20px' }}>
+                <Typography variant="h6">Select Sheet:</Typography>
+                <select
+                  value={sheetName || ''}
+                  onChange={(e) => setSheetName(e.target.value)}
+                  style={{
+                    padding: '8px',
+                    marginTop: '10px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    color: '#ffffff',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '8px',
+                  }}
+                >
+                  <option value="" style={{ backgroundColor: '#1e1e1e', color: '#ffffff' }}>
+                    Select a sheet
+                  </option>
+                  {sheets.map((name, index) => (
+                    <option
+                      key={index}
+                      value={name}
+                      style={{ backgroundColor: '#1e1e1e', color: '#ffffff' }}
+                    >
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {/* Main App Content */}
             {!spreadsheetId ? (
               // Prompt to select a Google Sheet
@@ -365,46 +411,6 @@ function App() {
                 <Button variant="contained" color="primary" onClick={handleSheetSelection}>
                   Select Google Sheet
                 </Button>
-              </motion.div>
-            ) : !sheetName ? (
-              // Sheet name selection
-              <motion.div
-                initial="hidden"
-                animate="visible"
-                variants={containerVariants}
-                transition={{ duration: 0.5 }}
-                className="select-sheet-container"
-              >
-                <div className="select-sheet-container">
-                  <div style={{ marginTop: '20px' }}>
-                    <Typography variant="h6">Select Sheet:</Typography>
-                    <select
-                      value={sheetName}
-                      onChange={(e) => setSheetName(e.target.value)}
-                      style={{
-                        padding: '8px',
-                        marginTop: '10px',
-                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                        color: '#ffffff',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
-                        borderRadius: '8px',
-                      }}
-                    >
-                      <option value="" style={{ backgroundColor: '#1e1e1e', color: '#ffffff' }}>
-                        Select a sheet
-                      </option>
-                      {sheets.map((name, index) => (
-                        <option
-                          key={index}
-                          value={name}
-                          style={{ backgroundColor: '#1e1e1e', color: '#ffffff' }}
-                        >
-                          {name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
               </motion.div>
             ) : isProcessing && dances.length === 0 ? (
               // Show loading indicator while processing
