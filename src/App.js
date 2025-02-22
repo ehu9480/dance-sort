@@ -249,8 +249,8 @@ function App() {
         },
         {
           headers: {
-            'Content-Type': 'application/json',
-          },
+            'Content-Type': 'application/json'
+          }
         }
       );
       setDances(response.data.dances);
@@ -272,10 +272,8 @@ function App() {
     if (dances.length > 0 && Object.keys(localPreferences).length === 0) {
       setLocalPreferences({
         Unassigned: dances.map((dance) => ({ name: dance })),
-        'Fixed Positions': [],
-        Start: [],
-        Middle: [],
-        End: [],
+        'Order Constraints': [],
+        'Excluded': [],
       });
     }
   }, [dances]);
@@ -284,14 +282,13 @@ function App() {
   useEffect(() => {
     if (Object.keys(localPreferences).length > 0) {
       const updatedPreferences = {
-        fixedPositions: localPreferences['Fixed Positions'].map((item) => ({
+        orderConstraints: localPreferences['Order Constraints'].map((item) => ({
           name: item.name,
-          position: item.position,
+          position: item.position === 'relative' ? null : parseInt(item.position)
         })),
-        Start: localPreferences.Start.map((item) => item.name),
-        Middle: localPreferences.Middle.map((item) => item.name),
-        End: localPreferences.End.map((item) => item.name),
+        excluded: localPreferences['Excluded'].map((item) => item.name)
       };
+      console.log('Sending preferences:', updatedPreferences);
       setPreferences(updatedPreferences);
     }
   }, [localPreferences]);
@@ -305,12 +302,12 @@ function App() {
           token: token,
           spreadsheetId: spreadsheetId,
           sheetName: sheetName,
-          preferences: preferences, // Send preferences, not localPreferences
+          preferences: preferences,
         },
         {
           headers: {
-            'Content-Type': 'application/json',
-          },
+            'Content-Type': 'application/json'
+          }
         }
       );
       setResults(response.data.results);
@@ -319,6 +316,8 @@ function App() {
       if (error.response && (error.response.status === 401 || error.response.status === 403)) {
         alert('Session expired. Please log in again.');
         logout();
+      } else {
+        alert('Error processing preferences. Please try again.');
       }
     }
     setIsProcessing(false);

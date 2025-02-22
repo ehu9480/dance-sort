@@ -4,7 +4,7 @@ import './DancePreference.css';
 import { motion } from 'framer-motion';
 
 function DancePreference({ dances, localPreferences, setLocalPreferences }) {
-  const sections = ['Unassigned', 'Fixed Positions', 'Start', 'Middle', 'End'];
+  const sections = ['Unassigned', 'Order Constraints', 'Excluded'];
 
   const sectionVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -18,15 +18,12 @@ function DancePreference({ dances, localPreferences, setLocalPreferences }) {
     const sourceId = source.droppableId;
     const destId = destination.droppableId;
 
-    // Clone local preferences
     const updatedPreferences = { ...localPreferences };
 
-    // Remove from source
     const sourceList = Array.from(updatedPreferences[sourceId]);
     const [movedDance] = sourceList.splice(source.index, 1);
     updatedPreferences[sourceId] = sourceList;
 
-    // Add to destination
     const destList = Array.from(updatedPreferences[destId]);
     destList.splice(destination.index, 0, movedDance);
     updatedPreferences[destId] = destList;
@@ -36,68 +33,63 @@ function DancePreference({ dances, localPreferences, setLocalPreferences }) {
 
   const handlePositionChange = (index, position) => {
     setLocalPreferences((prevState) => {
-      const updatedFixed = [...prevState['Fixed Positions']];
-      updatedFixed[index] = { ...updatedFixed[index], position: parseInt(position) };
+      const updatedFixed = [...prevState['Order Constraints']];
+      updatedFixed[index] = {
+        ...updatedFixed[index],
+        position: position === 'relative' ? 'relative' : parseInt(position)
+      };
       return {
         ...prevState,
-        'Fixed Positions': updatedFixed,
+        'Order Constraints': updatedFixed,
       };
     });
   };
 
   // Generate options for dropdown
-  const positionOptions = [];
-  for (let i = 1; i <= dances.length; i++) {
-    positionOptions.push(i);
-  }
+  const positionOptions = ['relative', ...Array.from({ length: dances.length }, (_, i) => i + 1)];
 
   return (
-  <DragDropContext onDragEnd={onDragEnd}>
-    {/* Sections: Fixed Positions, Start, Middle, End */}
-    <div className="sections-container">
-      {sections
-        .filter((section) => section !== 'Unassigned')
-        .map((section, index) => (
-          <Droppable key={section} droppableId={section}>
-            {(provided, snapshot) => (
-              <motion.div
-                ref={provided.innerRef}
-                className={`droppable-section ${
-                  snapshot.isDraggingOver ? 'dragging-over' : ''
-                }`}
-                {...provided.droppableProps}
-                initial="hidden"
-                animate="visible"
-                variants={sectionVariants}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <h3>{section}</h3>
-                {localPreferences[section].map((danceItem, index) => (
-                  <Draggable
-                    key={`${danceItem.name}-${index}`}
-                    draggableId={`${danceItem.name}-${section}-${index}`}
-                    index={index}
-                  >
-                    {(providedDrag, snapshotDrag) => (
-                      <motion.div
-                        ref={providedDrag.innerRef}
-                        {...providedDrag.draggableProps}
-                        {...providedDrag.dragHandleProps}
-                        className={`draggable-item ${snapshotDrag.isDragging ? 'dragging' : ''}`}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.3, delay: index * 0.05 }}
-                      >
-                        {danceItem.name}
-                          {section === 'Fixed Positions' && (
+    <DragDropContext onDragEnd={onDragEnd}>
+      <div className="sections-container">
+        {sections
+          .filter((section) => section !== 'Unassigned')
+          .map((section, index) => (
+            <Droppable key={section} droppableId={section}>
+              {(provided, snapshot) => (
+                <motion.div
+                  ref={provided.innerRef}
+                  className={`droppable-section ${snapshot.isDraggingOver ? 'dragging-over' : ''}`}
+                  {...provided.droppableProps}
+                  initial="hidden"
+                  animate="visible"
+                  variants={sectionVariants}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <h3>{section}</h3>
+                  {localPreferences[section].map((danceItem, index) => (
+                    <Draggable
+                      key={`${danceItem.name}-${index}`}
+                      draggableId={`${danceItem.name}-${section}-${index}`}
+                      index={index}
+                    >
+                      {(providedDrag, snapshotDrag) => (
+                        <motion.div
+                          ref={providedDrag.innerRef}
+                          {...providedDrag.draggableProps}
+                          {...providedDrag.dragHandleProps}
+                          className={`draggable-item ${snapshotDrag.isDragging ? 'dragging' : ''}`}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ duration: 0.3, delay: index * 0.05 }}
+                        >
+                          {danceItem.name}
+                          {section === 'Order Constraints' && (
                             <div className="position-select">
                               <label>
                                 Position:
                                 <select
-                                  value={danceItem.position || ''}
-                                  onChange={(e) =>
-                                    handlePositionChange(index, e.target.value)
-                                  }
+                                  value={danceItem.position || 'relative'}
+                                  onChange={(e) => handlePositionChange(index, e.target.value)}
                                   style={{
                                     padding: '8px',
                                     marginTop: '10px',
@@ -107,11 +99,11 @@ function DancePreference({ dances, localPreferences, setLocalPreferences }) {
                                     borderRadius: '8px',
                                   }}
                                 >
-                                  <option value="" style={{ backgroundColor: '#1e1e1e', color: '#ffffff' }}>
-                                    Select
+                                  <option value="relative" style={{ backgroundColor: '#1e1e1e', color: '#ffffff' }}>
+                                    Relative Order
                                   </option>
-                                  {positionOptions.map((pos) => (
-                                    <option 
+                                  {positionOptions.filter(pos => pos !== 'relative').map((pos) => (
+                                    <option
                                       key={pos}
                                       value={pos}
                                       style={{ backgroundColor: '#1e1e1e', color: '#ffffff' }}
